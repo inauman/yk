@@ -43,7 +43,7 @@ pnpm-debug.log*
 # Misc
 *.local
 *.sqlite3
-
+*.db
 # Test/coverage
 htmlcov/
 coverage.xml

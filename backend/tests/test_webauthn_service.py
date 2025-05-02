@@ -2,6 +2,9 @@ import pytest
 import json
 from backend.services.webauthn_service import WebAuthnService
 from backend.app import create_app
+import sqlite3
+import os
+from backend.models.init_db import DB_PATH
 
 def test_generate_registration_options():
     service = WebAuthnService()
@@ -87,4 +90,32 @@ def test_begin_authentication_api_after_registration(client):
         assert data['status'] == 'success'
         assert 'publicKey' in data['data']
     else:
-        assert data['status'] == 'error' 
+        assert data['status'] == 'error'
+
+def test_db_schema():
+    # Check that all tables exist
+    expected_tables = {'users', 'credentials', 'challenges', 'seeds', 'seed_credentials'}
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = {row[0] for row in cur.fetchall()}
+        assert expected_tables.issubset(tables)
+        # Check columns for users table
+        cur = conn.execute("PRAGMA table_info(users);")
+        user_cols = {row[1] for row in cur.fetchall()}
+        assert {'id', 'user_id', 'username', 'display_name', 'created_at', 'updated_at'}.issubset(user_cols)
+        # Check columns for credentials table
+        cur = conn.execute("PRAGMA table_info(credentials);")
+        cred_cols = {row[1] for row in cur.fetchall()}
+        assert {'id', 'user_id', 'credential_id', 'public_key', 'sign_count', 'nickname', 'registered_at'}.issubset(cred_cols)
+        # Check columns for challenges table
+        cur = conn.execute("PRAGMA table_info(challenges);")
+        chal_cols = {row[1] for row in cur.fetchall()}
+        assert {'id', 'user_id', 'challenge', 'type', 'created_at', 'expires_at'}.issubset(chal_cols)
+        # Check columns for seeds table
+        cur = conn.execute("PRAGMA table_info(seeds);")
+        seed_cols = {row[1] for row in cur.fetchall()}
+        assert {'id', 'user_id', 'encrypted_seed', 'iv', 'salt', 'wrapped_key', 'created_at', 'updated_at'}.issubset(seed_cols)
+        # Check columns for seed_credentials table
+        cur = conn.execute("PRAGMA table_info(seed_credentials);")
+        sc_cols = {row[1] for row in cur.fetchall()}
+        assert {'id', 'seed_id', 'credential_id'}.issubset(sc_cols) 
