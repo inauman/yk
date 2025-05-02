@@ -1,12 +1,12 @@
 # Project Plan & Task Tracking
 
 > **Note**: All task statuses are reset for the new project.
-> **Last updated: 2024-06-09**
+> **Last updated: 05/02/2025**
 
 ## Milestones & Tasks
 
 ### Phase 1: YubiKey Registration & Authentication
-- [ ] Set up persistent SQLite database for user, credential, and challenge storage (replace in-memory storage)
+- [x] Set up persistent SQLite database for user, credential, and challenge storage (replace in-memory storage)
 - [x] Verify YubiKey recognition and WebAuthn capabilities
 - [x] Implement backend API endpoints for YubiKey registration and authentication (/auth/begin-registration, /auth/complete-registration, /auth/begin-authentication, /auth/complete-authentication)
 - [x] Implement client-side registration and authentication flows in React
