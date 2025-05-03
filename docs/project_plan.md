@@ -12,46 +12,38 @@
 - [x] Implement client-side registration and authentication flows in React
 - [x] Test YubiKey registration and authentication (unit/integration)
 
-### Phase 2: Seed Generation & Validation
-- [ ] Implement BIP39 seed generation module
-- [ ] Validate and import seed phrases using checksum verification
-- [ ] Convert mnemonic phrases to binary seeds
-- [ ] Test seed generation and validation logic
+### Phase 2a: Large-Blob Seed POC (Single YubiKey, No Multisig)
+- [ ] **Backend**
+  - [ ] Add dependencies: `python-bitcointx` (BIP39), `cryptography`, `fido2`
+  - [ ] Utility module `seed_utils.py`:
+    - [ ] `gen_mnemonic(strength=256) -> (mnemonic, entropy)`
+    - [ ] `encrypt_seed(entropy) -> (blob_dict, printable_mnemonic)`
+  - [ ] Large-Blob helpers `yk_blob.py`:
+    - [ ] `write_blob(cred_id: bytes, blob: bytes)`
+    - [ ] `read_blob(cred_id) -> bytes`
+  - [ ] New routes:
+    - [ ] `POST /api/v1/seed/store` (generate, encrypt, write blob)
+    - [ ] `GET /api/v1/seed/retrieve` (read blob, decrypt, return mnemonic)
+  - [ ] Auth guard: require valid WebAuthn assertion with `largeBlob` and `hmacCreateSecret` extensions
+  - [ ] Unit tests: use `fido2.ctap2.virtual.Device` to simulate sign-in + blob write/read round-trip
+- [ ] **Frontend**
+  - [ ] Extend `api.ts` with `storeSeed()` and `retrieveSeed()`
+  - [ ] Minimal page `SeedVault.tsx`:
+    - [ ] "Generate & Store Seed" button (calls `/seed/store`, shows masked mnemonic)
+    - [ ] "Retrieve Seed" button (calls `/seed/retrieve`, shows mnemonic)
+    - [ ] Use `@simplewebauthn/browser` with `extensions: { hmacCreateSecret: true, largeBlob: { read: true, write: true } }`
+    - [ ] Add note: "Works in Chrome 123+ or with Yubico Manager fallback."
 
-### Phase 3: Seed Encryption & Storage
-- [ ] Develop encryption/decryption utilities using AES-256-GCM
-- [ ] Implement envelope encryption with proper key derivation (HKDF-SHA256)
-- [ ] Integrate SQLite database for encrypted seed and credential storage
-- [ ] Test encryption, storage, and access control
+### (Legacy/Future) - Multisig, Shamir, Server-side Storage (DEPRECATED for POC)
+- [ ] (No longer in scope for this POC; see chatgpt-yk-clean-arch.md for details)
 
-### Phase 4: Seed Retrieval & Decryption
-- [ ] Implement backend and frontend logic for seed retrieval and decryption after YubiKey authentication
-- [ ] Test retrieval and decryption with correct and incorrect credentials
-
-### Phase 5: YubiKey Management
-- [ ] Implement endpoints and UI for listing, adding, and removing registered YubiKeys
-- [ ] Test YubiKey management and access control
-
-### Phase 6: User Interface (Wizard Flow)
-- [x] Registration/authentication UI and API integration
-- [ ] Build a wizard-style UI for registration, seed generation/import, encryption/storage, retrieval, and YubiKey management
-- [ ] Integrate API services for seed flows
-- [ ] Ensure HTTPS configuration for local development
-- [ ] Test end-to-end user journey and UI feedback
-
-### Phase 7: Security & Session Management
-- [ ] Enforce HTTPS, secure session handling, and timeouts
-- [ ] Implement rate limiting and standardized error responses
-- [ ] Test security features and simulate attack scenarios
-
-### Phase 8: Integration Testing & Validation
-- [ ] Create and document end-to-end test scenarios
-- [ ] Perform cross-browser testing (Chrome, Safari, Firefox)
-- [ ] Update test scripts and resolve any issues
-
-### Phase 9: Documentation & Developer Guides
-- [ ] Consolidate all project documentation into the new structure (partial)
-- [ ] Write comprehensive API interface documentation (partial)
-- [ ] Create a developer guide for module organization and coding conventions (partial)
+### Phase 3+: (For future expansion, keep for reference)
+- [ ] Seed Encryption & Storage (envelope encryption, HKDF, etc.)
+- [ ] Seed Retrieval & Decryption
+- [ ] YubiKey Management
+- [ ] User Interface (Wizard Flow)
+- [ ] Security & Session Management
+- [ ] Integration Testing & Validation
+- [ ] Documentation & Developer Guides
 
 [Back to README](../README.md) 

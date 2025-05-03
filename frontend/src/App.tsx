@@ -1,16 +1,19 @@
+import React from 'react'
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import RegisterYubiKey from './RegisterYubiKey'
 import LoginYubiKey from './LoginYubiKey'
+import SeedVault from './SeedVault'
 
 function App() {
   // Simple navigation state for demo
   const [page, setPage] = useState<'home' | 'register' | 'login'>('home')
 
   return (
-    <>
+    <div className="App">
+      <SeedVault />
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -29,7 +32,7 @@ function App() {
         {page === 'login' && <LoginYubiKey />}
         {page === 'home' && <p>Select an action above to begin.</p>}
       </div>
-    </>
+    </div>
   )
 }
 
