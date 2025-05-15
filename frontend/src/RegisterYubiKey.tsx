@@ -82,6 +82,12 @@ const RegisterYubiKey = () => {
       if (!publicKey.user.name || !publicKey.user.displayName) throw new Error('Missing user.name or user.displayName from backend');
       if (!Array.isArray(publicKey.pubKeyCredParams)) throw new Error('Missing pubKeyCredParams from backend');
 
+      // Inject hmac-secret extension so the credential can later provide a secret
+      publicKey.extensions = {
+        ...(publicKey.extensions || {}),
+        hmacCreateSecret: true,
+      };
+
       // 2. Call WebAuthn API
       // @ts-ignore
       const cred = await window.navigator.credentials.create({ publicKey });
