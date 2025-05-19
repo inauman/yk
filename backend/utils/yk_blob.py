@@ -1,3 +1,5 @@
+import fido2.features
+fido2.features.webauthn_json_mapping.enabled = False
 from fido2.hid import CtapHidDevice
 from fido2.client import Fido2Client
 from fido2.ctap2.base import Ctap2
@@ -74,6 +76,26 @@ def get_credential_and_largeblobkey(cred_id: bytes, pin: Optional[str] = None):
     return cred, large_blob_key, ctap2, pin_proto, pin_token
 
 
+def _enforce_user_presence(cred_id: bytes):
+    """
+    Perform a get_assertion with userVerification: 'required' to enforce user presence (touch).
+    """
+    from fido2.client import Fido2Client
+    from backend.utils.exampleutils import CliInteraction
+    dev = get_yubikey_device()
+    client = Fido2Client(dev, f"https://{RP_ID}", user_interaction=CliInteraction())
+    request_options = {
+        "rpId": RP_ID,
+        "challenge": os.urandom(32),
+        "userVerification": "required",
+        "allowCredentials": [{"type": "public-key", "id": cred_id}],
+    }
+    try:
+        client.get_assertion(request_options)
+    except Exception as e:
+        raise RuntimeError(f"User presence (touch) required but failed: {e}")
+
+
 def write_blob(cred_id: bytes, blob: bytes, pin: Optional[str] = None):
     """
     Write the given blob to the YubiKey's large-blob storage for the specified credential.
@@ -82,6 +104,7 @@ def write_blob(cred_id: bytes, blob: bytes, pin: Optional[str] = None):
         blob: Data to write (bytes)
         pin: Optional PIN (if not provided, will prompt)
     """
+    _enforce_user_presence(cred_id)
     _, large_blob_key, ctap2, pin_proto, pin_token = get_credential_and_largeblobkey(cred_id, pin)
     lb = LargeBlobs(ctap2, pin_proto, pin_token)
     lb.put_blob(large_blob_key, blob)
@@ -96,6 +119,7 @@ def read_blob(cred_id: bytes, pin: Optional[str] = None) -> bytes:
     Returns:
         blob (bytes)
     """
+    _enforce_user_presence(cred_id)
     _, large_blob_key, ctap2, pin_proto, pin_token = get_credential_and_largeblobkey(cred_id, pin)
     lb = LargeBlobs(ctap2, pin_proto, pin_token)
     return lb.get_blob(large_blob_key) 

@@ -40,6 +40,8 @@ from fido2.ctap2 import CredentialManagement as CM
 from fido2.ctap2.blob import LargeBlobs
 import os
 import functools
+import fido2.features
+fido2.features.webauthn_json_mapping.enabled = False
 
 RP_ID = "localhost"  # must exactly match the RP ID used at registration
 log = functools.partial(print, file=sys.stderr)
@@ -67,6 +69,25 @@ def pick_credential(creds):
         if sel.isdigit() and 0 <= (i := int(sel)) < len(creds):
             return creds[i]
         log("Invalid selection.")
+
+
+def enforce_user_presence(cred_id):
+    """
+    Perform a get_assertion with userVerification: 'required' to enforce user presence (touch).
+    """
+    dev = next(CtapHidDevice.list_devices(), None)
+    client = Fido2Client(dev, f"https://{RP_ID}", user_interaction=CliInteraction())
+    request_options = {
+        "rpId": RP_ID,
+        "challenge": os.urandom(32),
+        "userVerification": "required",
+        "allowCredentials": [{"type": "public-key", "id": cred_id}],
+    }
+    try:
+        client.get_assertion(request_options)
+    except Exception as e:
+        log(f"User presence (touch) required but failed: {e}")
+        sys.exit(1)
 
 
 def main():
@@ -174,6 +195,7 @@ def main():
     interaction.prompt_up = _prompt_up
 
     if mode == "write":
+        enforce_user_presence(cred_id)
         blob_path = sys.argv[3] if len(sys.argv) > 3 else input("Path to blob file: ")
         blob_path = os.path.expanduser(blob_path)
         try:
@@ -199,6 +221,7 @@ def main():
             traceback.print_exc()
             sys.exit(1)
     else:  # mode == "read"
+        enforce_user_presence(cred_id)
         interaction.prompt_up()
         log("Reading large-blob…")
         try:
